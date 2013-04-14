@@ -36,6 +36,10 @@ class NewVisitorTest(LiveServerTestCase):
         # "1: Buy peacock feathers" as an item in a to-do list table
         inputbox.send_keys(Keys.ENTER)
 
+        edith_list_url = self.browser.current_url
+        self.assertRegexMatches(edith_list_url, '/lists/.+')
+        self.assertIn('1: Buy peacock feathers', [row.text for row in rows])
+
         import time
         #time.sleep(10)
 
@@ -56,13 +60,43 @@ class NewVisitorTest(LiveServerTestCase):
         # Edith wonders whether the site will remember her list. Then she sees
         # that the site has generate a unique URL for her -- there is some
         # explanatory text to that effect.
+
+        # Now a new user, Francis, comes along to the site.
+        self.browser.quit()
+        ## We use a new browser session to make sure that no information
+        ## of Edith's is coming through from cookies etc
+        self.browser = webdriver.Firefox()
+
+        # Francis visits the home page.  There is no sign of Edith's
+        # list
+        self.browser.get(self.live_server_url)
+        page_text = self.browser.find_element_by_tag_name('body').text
+        self.assertNotIn('Buy peacock feathers', page_text)
+        self.assertNotIn('make a fly', page_text)
+
+        # Francis starts a new list by entering a new item. He
+        # is less interesting than Edith...
+        inputbox = self.browser.find_element_by_id('id_new_item')
+        inputbox.send_keys('Buy milk')
+        inputbox.send_keys(Keys.ENTER)
+
+        # Francis gets his own unique URL
+        francis_list_url = self.browser.current_url
+        self.assertRegexpMatches(francis_list_url, '/lists/.+')
+        self.assertNotEqual(francis_list_url, edith_list_url)
+
+        # Again, there is no trace of Edith's list
+        page_text = self.browser.find_element_by_tag_name('body').text
+        self.assertNotIn('Buy peacock feathers', page_text)
+        self.assertIn('Buy milk', page_text)
+
+
         self.fail('Finish the test!')
+
+
 
 
     def check_for_row_in_list_table(self, row_text):
         table = self.browser.find_element_by_id('id_list_table')
         rows = table.find_elements_by_tag_name('tr')
         self.assertIn(row_text, [row.text for row in rows])
-
-# if __name__ == '__main__':
-#     unittest.main()
