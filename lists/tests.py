@@ -15,8 +15,8 @@ class ListViewTest(TestCase):
         Item.objects.create(text="itemey 2")
 
         client = Client()
-        # response = client.get('/lists/the-only-list-in-the-world')
-        client.get('/lists/the-only-list-in-the-world')
+        # client.get('/lists/the-only-list-in-the-world/')
+        response = client.get('/lists/the-only-list-in-the-world/')
 
         self.assertIn('itemey 1', response.content)
         self.assertIn('itemey 2', response.content)
