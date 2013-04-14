@@ -1,5 +1,5 @@
 from django.core.urlresolvers import resolve
-from django.test import TestCase
+from django.test import TestCase, Client
 from django.http import HttpRequest
 from lists.views import home_page
 from django.template.loader import render_to_string
@@ -7,6 +7,20 @@ from django.template.loader import render_to_string
 
 from lists.models import Item
 from lists.views import home_page
+
+class ListViewTest(TestCase):
+
+    def test_list_view_displays_all_items(self):
+        Item.objects.create(text="itemey 1")
+        Item.objects.create(text="itemey 2")
+
+        client = Client()
+        # response = client.get('/lists/the-only-list-in-the-world')
+        client.get('/lists/the-only-list-in-the-world')
+
+        self.assertIn('itemey 1', response.content)
+        self.assertIn('itemey 2', response.content)
+
 
 
 class HomePageTest(TestCase):
@@ -35,7 +49,7 @@ class HomePageTest(TestCase):
         self.assertEqual(new_item.text, 'A new list item')
 
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['location'], '/')
+        self.assertEqual(response['location'], '/lists/the-only-list-in-the-world/')
 
     def test_home_page_displays_all_list_items(self):
         Item.objects.create(text='itemey 1')
