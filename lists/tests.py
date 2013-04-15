@@ -8,9 +8,6 @@ from django.template.loader import render_to_string
 from lists.models import Item
 from lists.views import home_page
 
-class TestGit(TestCase):
-    def test_awesome(self):
-        self.assertEqual("Harry is awesome", "Harry is awesome because he likes buffalo wings")
 
 class ListViewTest(TestCase):
 
