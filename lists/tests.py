@@ -9,20 +9,29 @@ from lists.models import Item, List
 from lists.views import home_page
 
 
-class ListViewTest(TestCase):
+# class ListViewTest(TestCase):
 
-    def test_list_view_displays_all_items(self):
-        Item.objects.create(text="itemey 1")
-        Item.objects.create(text="itemey 2")
+#     def test_list_view_displays_all_items(self):
+#         self.fail('failed test')
+#         Item.objects.create(text="itemey 1")
+#         Item.objects.create(text="itemey 2")
 
-        client = Client()
-        # client.get('/lists/the-only-list-in-the-world/')
-        response = client.get('/lists/the-only-list-in-the-world/')
+#         client = Client()
+#         # client.get('/lists/the-only-list-in-the-world/')
+#         response = client.get('/lists/the-only-list-in-the-world/')
+#         # response = client.get('/lists/%d/' % (list.id, ))
 
-        self.assertIn('itemey 1', response.content)
-        self.assertIn('itemey 2', response.content)
-        self.assertTemplateUsed(response, 'list.html')
+#         self.assertIn('itemey 1', response.content)
+#         self.assertIn('itemey 2', response.content)
+#         self.assertTemplateUsed(response, 'list.html')
 
+#         self.assertNotIn('other list item 2', response.content)
+#         self.assertTemplateUsed(response, 'list.html')
+#         print "---------------"
+#         print "dir(response):", dir(response)
+#         print "---------------"
+#         print "response.context:", response.context
+#         self.assertEqual(response.context['list'], list)
 
 
 class HomePageTest(TestCase):
@@ -53,12 +62,19 @@ class NewListTest(TestCase):
 
         self.assertEqual(response.status_code, 302)
 
+        self.assertEqual(List.objects.all().count(), 1)
+        new_list = List.objects.all()[0]
+
         self.assertEqual(Item.objects.all().count(), 1)
         new_item = Item.objects.all()[0]
         self.assertEqual(new_item.text, 'A new list item')
+        self.assertEqual(new_item.list, new_list)
 
         # self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, '/lists/the-only-list-in-the-world/')
+        # self.assertRedirects(response, '/lists/the-only-list-in-the-world/')
+        print "Printing new_list.id:", new_list.id
+        print response
+        self.assertRedirects(response, '/lists/%d/' % (new_list.id, ))
 
 
 
@@ -100,3 +116,44 @@ class ListViewTest(TestCase):
         list = List.objects.create()
         Item.objects.create(text='itemey 1', list=list)
         Item.objects.create(text='itemey 2', list=list)
+
+        other_list = List.objects.create()
+        Item.objects.create(text='other list item 1', list=other_list)
+        Item.objects.create(text='other list item 2', list=other_list)
+
+        client = Client()
+        response = client.get('/lists/%d/' % (list.id,))
+
+        self.assertIn('itemey 1', response.content)
+        self.assertIn('itemey 2', response.content)
+        self.assertNotIn('other list item 1', response.content)
+        self.assertNotIn('other list item 2', response.content)
+        self.assertTemplateUsed(response, 'list.html')
+
+        self.assertNotIn('other list item 2', response.content)
+        self.assertTemplateUsed(response, 'list.html')
+        self.assertEqual(response.context['list'], list)
+
+
+class NewItemTest(TestCase):
+
+    def test_saving_a_POST_request_to_an_existing_list(self):
+        list = List.objects.create()
+        other_list = List.objects.create()
+        client = Client()
+        response = client.post(
+            '/lists/%d/new_item' % (list.id,), \
+            data={'item_text': 'A new item for an existing list'}
+        )
+
+
+        self.assertRedirects(response, '/lists/%d/' % (list.id, ))
+
+        self.assertEqual(Item.objects.all().count(), 1)
+        new_item = Item.objects.all()[0]
+
+        self.assertEqual(new_item.text, 'A new item for an existing list')
+        self.assertEqual(new_item.list, list)
+
+
+
